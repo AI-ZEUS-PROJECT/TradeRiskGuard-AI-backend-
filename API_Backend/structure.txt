@@ -1,0 +1,35 @@
+API_Backend(tradeguard-api)/
+├── api/
+│   ├── __init__.py
+│   ├── main.py              # FastAPI app
+│   ├── config.py           # Configuration
+│   ├── models.py           # Database models
+│   ├── schemas.py          # Pydantic schemas
+│   ├── auth.py             # Authentication
+│   ├── database.py         # Database connection
+│   ├── middleware.py       # Custom middleware
+│   ├── utils.py            # Utility functions
+│   │
+│   ├── routers/            # API routers
+│   │   ├── __init__.py
+│   │   ├── analyze.py     # Trade analysis
+│   │   ├── risk.py        # Risk assessment
+│   │   ├── reports.py     # Report generation
+│   │   ├── users.py       # User management
+│   │   └── dashboard.py   # Dashboard data
+│   │
+│   └── tests/              # API tests
+│       └── __init__.py
+│
+├── core/                   # Your existing core logic (unchanged)
+│   ├── __init__.py
+│   ├── ai_explainer.py
+│   ├── metrics_calculator.py
+│   ├── risk_rules.py
+│   ├── risk_scorer.py
+│   └── report_generator.py
+│
+├── requirements.txt        # Dependencies
+├── .env.example           # Environment template
+├── .gitignore
+└── README.md
