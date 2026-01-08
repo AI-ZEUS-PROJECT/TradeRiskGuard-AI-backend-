@@ -6,9 +6,11 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Upload, Download, FileText, CheckCircle } from "lucide-react"
 import Link from "next/link"
+import { useAuth } from "@/contexts/auth-context"
 
 export function CSVUploadSection() {
   const router = useRouter()
+  const { isAuthenticated } = useAuth()
   const [dragActive, setDragActive] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -44,6 +46,12 @@ export function CSVUploadSection() {
 
   const handleUpload = async () => {
     if (!file) return
+
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      router.push("/signin")
+      return
+    }
 
     setIsLoading(true)
     // Simulate analysis delay
@@ -185,16 +193,18 @@ export function CSVUploadSection() {
         </div>
 
         {/* CTA to Dashboard */}
-        <div className="mt-8 text-center">
-          <p className="text-muted-foreground mb-4">Already have data analyzed? View your dashboard to see insights.</p>
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-semibold transition-all duration-300 hover:gap-3"
-          >
-            Go to Dashboard
-            <span className="text-lg">→</span>
-          </Link>
-        </div>
+        {isAuthenticated && (
+          <div className="mt-8 text-center">
+            <p className="text-muted-foreground mb-4">Already have data analyzed? View your dashboard to see insights.</p>
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-semibold transition-all duration-300 hover:gap-3"
+            >
+              Go to Dashboard
+              <span className="text-lg">→</span>
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   )
