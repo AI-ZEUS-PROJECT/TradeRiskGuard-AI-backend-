@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 import statistics
 
-from api import schemas, models, auth
+from api import schemas, modelss, auth
 from api.database import get_db
 
 router = APIRouter()
@@ -22,9 +22,9 @@ async def get_dashboard_summary(
     Get dashboard summary data
     """
     # Get user's analyses
-    analyses = db.query(models.Analysis)\
-        .filter(models.Analysis.user_id == current_user.id)\
-        .order_by(desc(models.Analysis.created_at))\
+    analyses = db.query(modelss.Analysis)\
+        .filter(modelss.Analysis.user_id == current_user.id)\
+        .order_by(desc(modelss.Analysis.created_at))\
         .all()
     
     if not analyses:
@@ -126,13 +126,13 @@ async def get_performance_metrics(
         start_date = now - timedelta(days=365)
     
     # Get analyses in period
-    analyses = db.query(models.Analysis)\
+    analyses = db.query(modelss.Analysis)\
         .filter(
-            models.Analysis.user_id == current_user.id,
-            models.Analysis.created_at >= start_date,
-            models.Analysis.score_result.isnot(None)
+            modelss.Analysis.user_id == current_user.id,
+            modelss.Analysis.created_at >= start_date,
+            modelss.Analysis.score_result.isnot(None)
         )\
-        .order_by(models.Analysis.created_at)\
+        .order_by(modelss.Analysis.created_at)\
         .all()
     
     # Format response
@@ -185,12 +185,12 @@ async def get_insights(
     Get personalized insights based on user's trading history
     """
     # Get recent analyses
-    analyses = db.query(models.Analysis)\
+    analyses = db.query(modelss.Analysis)\
         .filter(
-            models.Analysis.user_id == current_user.id,
-            models.Analysis.score_result.isnot(None)
+            modelss.Analysis.user_id == current_user.id,
+            modelss.Analysis.score_result.isnot(None)
         )\
-        .order_by(desc(models.Analysis.created_at))\
+        .order_by(desc(modelss.Analysis.created_at))\
         .limit(10)\
         .all()
     

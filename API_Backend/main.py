@@ -14,7 +14,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'api'))
 
 # Import database FIRST to create tables
 from api.database import init_db, engine, Base
-from api import models  # This imports all models
+from api import modelss  # This imports all models
 
 # Import routers
 from api.routers import analyze, risk, reports, users, dashboard, alerts

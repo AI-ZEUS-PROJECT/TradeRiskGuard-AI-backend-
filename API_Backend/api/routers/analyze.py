@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from datetime import datetime
 
-from api import schemas, models, auth
+from api import schemas, modelss, auth
 from api.database import get_db
 from core.metrics_calculator import TradeMetricsCalculator
 from core.risk_rules import RiskRuleEngine
@@ -79,7 +79,7 @@ def process_trade_data(df: pd.DataFrame):
 
 def save_analysis_to_db(
     db: Session,
-    user: Optional[models.User],
+    user: Optional[modelss.User],
     filename: str,
     original_filename: str,
     file_size: int,
@@ -91,7 +91,7 @@ def save_analysis_to_db(
     # 🔑 CRITICAL FIX
     safe_results = make_json_safe(results)
 
-    analysis = models.Analysis(
+    analysis = modelss.Analysis(
         user_id=user.id if user else None,
         filename=filename,
         original_filename=original_filename,
@@ -215,7 +215,7 @@ async def get_analysis(
     current_user: Optional[schemas.UserResponse] = Depends(auth.get_optional_user),
     db: Session = Depends(get_db)
 ):
-    analysis = db.query(models.Analysis).filter(models.Analysis.id == analysis_id).first()
+    analysis = db.query(modelss.Analysis).filter(modelss.Analysis.id == analysis_id).first()
 
     if not analysis:
         raise HTTPException(status_code=404, detail="Analysis not found")
@@ -254,17 +254,17 @@ async def list_analyses(
         raise HTTPException(status_code=401, detail="Authentication required")
 
     analyses = (
-        db.query(models.Analysis)
-        .filter(models.Analysis.user_id == current_user.id)
-        .order_by(models.Analysis.created_at.desc())
+        db.query(modelss.Analysis)
+        .filter(modelss.Analysis.user_id == current_user.id)
+        .order_by(modelss.Analysis.created_at.desc())
         .offset(skip)
         .limit(limit)
         .all()
     )
 
     total = (
-        db.query(models.Analysis)
-        .filter(models.Analysis.user_id == current_user.id)
+        db.query(modelss.Analysis)
+        .filter(modelss.Analysis.user_id == current_user.id)
         .count()
     )
 

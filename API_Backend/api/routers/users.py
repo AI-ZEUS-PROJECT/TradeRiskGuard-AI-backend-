@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from datetime import timedelta
 from typing import Optional
 
-from api import schemas, models, auth
+from api import schemas, modelss, auth
 from api.config import settings
 from api.database import get_db
 
@@ -21,10 +21,10 @@ async def register_user(
     Register a new user
     """
     # Check if user already exists
-    existing_user = db.query(models.User)\
+    existing_user = db.query(modelss.User)\
         .filter(
-            (models.User.email == user_data.email) | 
-            (models.User.username == user_data.username)
+            (modelss.User.email == user_data.email) | 
+            (modelss.User.username == user_data.username)
         )\
         .first()
     
@@ -37,7 +37,7 @@ async def register_user(
     # Create new user
     hashed_password = auth.get_password_hash(user_data.password)
     
-    user = models.User(
+    user = modelss.User(
         email=user_data.email,
         username=user_data.username,
         hashed_password=hashed_password
@@ -48,7 +48,7 @@ async def register_user(
     db.refresh(user)
     
     # Create default settings for user (avoid overwriting 'settings')
-    user_settings = models.UserSettings(user_id=user.id)
+    user_settings = modelss.UserSettings(user_id=user.id)
     db.add(user_settings)
     db.commit()
     
@@ -82,8 +82,8 @@ async def login_user(
     """
     Login user and return access token
     """
-    user = db.query(models.User)\
-        .filter(models.User.email == login_data.email)\
+    user = db.query(modelss.User)\
+        .filter(modelss.User.email == login_data.email)\
         .first()
     
     if not user or not auth.verify_password(login_data.password, user.hashed_password):
@@ -147,13 +147,13 @@ async def get_user_settings(
     """
     Get user settings
     """
-    settings = db.query(models.UserSettings)\
-        .filter(models.UserSettings.user_id == current_user.id)\
+    settings = db.query(modelss.UserSettings)\
+        .filter(modelss.UserSettings.user_id == current_user.id)\
         .first()
     
     if not settings:
         # Create default settings if not exists
-        settings = models.UserSettings(user_id=current_user.id)
+        settings = modelss.UserSettings(user_id=current_user.id)
         db.add(settings)
         db.commit()
         db.refresh(settings)
@@ -182,12 +182,12 @@ async def update_user_settings(
     """
     Update user settings
     """
-    settings = db.query(models.UserSettings)\
-        .filter(models.UserSettings.user_id == current_user.id)\
+    settings = db.query(modelss.UserSettings)\
+        .filter(modelss.UserSettings.user_id == current_user.id)\
         .first()
     
     if not settings:
-        settings = models.UserSettings(user_id=current_user.id)
+        settings = modelss.UserSettings(user_id=current_user.id)
         db.add(settings)
     
     # Update only provided fields

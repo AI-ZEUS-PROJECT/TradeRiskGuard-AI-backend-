@@ -10,7 +10,7 @@ from typing import Optional, List, Dict, Any
 from api import schemas
 from api.database import get_db
 from api.auth import get_current_active_user
-from api.models import User, PredictiveAlert, AlertSettings, AlertHistory, Analysis
+from api.modelss import User, PredictiveAlert, AlertSettings, AlertHistory, Analysis
 from api.utils.prediction_engine import PredictionEngine
 from api.schemas.alerts import (
     GenerateAlertsRequest, AlertResponse, GenerateAlertsResponse,
