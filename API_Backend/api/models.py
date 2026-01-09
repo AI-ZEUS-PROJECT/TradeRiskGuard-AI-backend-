@@ -8,6 +8,14 @@ from datetime import datetime
 import uuid
 from api.database import Base
 
+"""
+Update main models.py to import alert models
+"""
+# Add at the top
+from .models.alert_models import PredictiveAlert, AlertSettings, AlertHistory
+
+# Keep all existing models, just add these imports
+
 
 def generate_uuid():
     return str(uuid.uuid4())

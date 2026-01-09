@@ -17,7 +17,7 @@ from api.database import init_db, engine, Base
 from api import models  # This imports all models
 
 # Import routers
-from api.routers import analyze, risk, reports, users, dashboard
+from api.routers import analyze, risk, reports, users, dashboard, alerts
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -60,6 +60,7 @@ app.include_router(risk.router, prefix="/api/risk", tags=["Risk Assessment"])
 app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
 app.include_router(users.router, prefix="/api/users", tags=["Users"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
+app.include_router(alerts.router, prefix="/api/alerts", tags=["Predictive Alerts"])
 
 # Health check endpoints
 @app.get("/")
