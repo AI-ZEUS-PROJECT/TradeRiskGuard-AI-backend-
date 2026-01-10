@@ -22,7 +22,10 @@ class Settings(BaseSettings):
     
     # Database
     DATABASE_URL: str = "sqlite:///./tradeguard.db"
-    
+    ENCRYPTION_SECRET: str="your-encryption-secret-key-change-in-production"
+
+# Deriv API settings (optional, for testing)
+    DERIV_API_URL: str="https://deriv-api.crypto.com"
     # Security
     SECRET_KEY: str = "your-secret-key-here-change-in-production"
     ALGORITHM: str = "HS256"
