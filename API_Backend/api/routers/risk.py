@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from typing import Optional
 import numpy as np
 
-from api import schemas, modelss, auth
+from api import schemas, models, auth
 from api.database import get_db
 from core.risk_scorer import RiskScorer
 from core.ai_explainer import AIRiskExplainer

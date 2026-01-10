@@ -10,7 +10,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
 from api.database import get_db
-from api import modelss
+from api import models
 
 # Secret settings (use .env in production)
 SECRET_KEY = "your-secret-key-change-in-production"
@@ -83,12 +83,12 @@ async def get_current_user(
     if user_id is None:
         raise credentials_exception
 
-    user = db.query(modelss.User).filter(modelss.User.id == user_id).first()
+    user = db.query(models.User).filter(models.User.id == user_id).first()
     if user is None:
         raise credentials_exception
     return user
 
-async def get_current_active_user(current_user: modelss.User = Depends(get_current_user)):
+async def get_current_active_user(current_user: models.User = Depends(get_current_user)):
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
@@ -107,7 +107,7 @@ async def get_optional_user(
         user_id: str = payload.get("sub")
         if user_id is None:
             return None
-        user = db.query(modelss.User).filter(modelss.User.id == user_id).first()
+        user = db.query(models.User).filter(models.User.id == user_id).first()
         return user
     except Exception:
         return None

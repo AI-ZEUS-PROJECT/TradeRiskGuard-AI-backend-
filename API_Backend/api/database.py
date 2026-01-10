@@ -26,7 +26,7 @@ Base = declarative_base()
 def init_db():
     """Initialize database by creating all tables"""
     try:
-        from api import modelss  # Import models here to avoid circular imports
+        from api import models  # Import models here to avoid circular imports
         
         print("🔧 Creating database tables...")
         

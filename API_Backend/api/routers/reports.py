@@ -9,7 +9,7 @@ import io
 import tempfile
 import os
 
-from api import schemas, modelss, auth
+from api import schemas, models, auth
 from api.database import get_db
 from core.report_generator import ReportGenerator
 
@@ -26,8 +26,8 @@ async def generate_report(
     """
     try:
         # Get analysis
-        analysis = db.query(modelss.Analysis)\
-            .filter(modelss.Analysis.id == request.analysis_id)\
+        analysis = db.query(models.Analysis)\
+            .filter(models.Analysis.id == request.analysis_id)\
             .first()
         
         if not analysis:
@@ -55,7 +55,7 @@ async def generate_report(
             )
             
             # Save to database
-            report = modelss.Report(
+            report = models.Report(
                 analysis_id=analysis.id,
                 report_type="markdown",
                 content=report_content
@@ -71,7 +71,7 @@ async def generate_report(
             report_content = generator.generate_html_report(markdown_report)
             
             # Save to database
-            report = modelss.Report(
+            report = models.Report(
                 analysis_id=analysis.id,
                 report_type="html",
                 content=report_content
@@ -87,7 +87,7 @@ async def generate_report(
                 analysis.ai_explanations or {}
             )
             
-            report = modelss.Report(
+            report = models.Report(
                 analysis_id=analysis.id,
                 report_type="pdf",
                 content="PDF generation coming soon. Here's markdown version:\n\n" + report_content
@@ -132,7 +132,7 @@ async def download_report(
     """
     Download a generated report
     """
-    report = db.query(modelss.Report).filter(modelss.Report.id == report_id).first()
+    report = db.query(models.Report).filter(models.Report.id == report_id).first()
     
     if not report:
         raise HTTPException(
@@ -141,8 +141,8 @@ async def download_report(
         )
     
     # Get associated analysis for authorization check
-    analysis = db.query(modelss.Analysis)\
-        .filter(modelss.Analysis.id == report.analysis_id)\
+    analysis = db.query(models.Analysis)\
+        .filter(models.Analysis.id == report.analysis_id)\
         .first()
     
     if current_user and analysis.user_id and analysis.user_id != current_user.id:
@@ -192,8 +192,8 @@ async def list_reports(
     """
     List all reports for an analysis
     """
-    analysis = db.query(modelss.Analysis)\
-        .filter(modelss.Analysis.id == analysis_id)\
+    analysis = db.query(models.Analysis)\
+        .filter(models.Analysis.id == analysis_id)\
         .first()
     
     if not analysis:
@@ -208,9 +208,9 @@ async def list_reports(
             detail="Not authorized to view reports for this analysis"
         )
     
-    reports = db.query(modelss.Report)\
-        .filter(modelss.Report.analysis_id == analysis_id)\
-        .order_by(modelss.Report.generated_at.desc())\
+    reports = db.query(models.Report)\
+        .filter(models.Report.analysis_id == analysis_id)\
+        .order_by(models.Report.generated_at.desc())\
         .all()
     
     response_data = [
