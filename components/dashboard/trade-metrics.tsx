@@ -1,37 +1,53 @@
 import { BarChart3, DollarSign, TrendingUp, Clock } from "lucide-react"
 
-const tradeStats = [
-  {
-    label: "Total Trades",
-    value: "127",
-    icon: BarChart3,
-    color: "text-primary",
-    bgColor: "bg-primary/10",
-  },
-  {
-    label: "Total P&L",
-    value: "$8,750",
-    icon: DollarSign,
-    color: "text-success",
-    bgColor: "bg-success/10",
-  },
-  {
-    label: "Avg Trade Return",
-    value: "2.45%",
-    icon: TrendingUp,
-    color: "text-accent",
-    bgColor: "bg-accent/10",
-  },
-  {
-    label: "Avg Trade Duration",
-    value: "3h 24m",
-    icon: Clock,
-    color: "text-secondary",
-    bgColor: "bg-secondary/10",
-  },
-]
+type TradeMetricsProps = {
+  analysis: any | null
+}
 
-export function TradeMetrics() {
+export function TradeMetrics({ analysis }: TradeMetricsProps) {
+  if (!analysis) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="p-6 rounded-xl bg-card/50 border border-border/30 text-center text-muted-foreground">
+          No analysis data available
+        </div>
+      </div>
+    )
+  }
+
+  const metrics = analysis.metrics || {}
+  
+  const tradeStats = [
+    {
+      label: "Total Trades",
+      value: String(metrics.total_trades || 0),
+      icon: BarChart3,
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+    },
+    {
+      label: "Net P&L",
+      value: `$${(metrics.net_profit || 0).toFixed(2)}`,
+      icon: DollarSign,
+      color: (metrics.net_profit || 0) >= 0 ? "text-success" : "text-destructive",
+      bgColor: (metrics.net_profit || 0) >= 0 ? "bg-success/10" : "bg-destructive/10",
+    },
+    {
+      label: "Avg Win/Loss",
+      value: `$${(metrics.avg_win || 0).toFixed(2)} / $${(metrics.avg_loss || 0).toFixed(2)}`,
+      icon: TrendingUp,
+      color: "text-accent",
+      bgColor: "bg-accent/10",
+    },
+    {
+      label: "Avg Duration",
+      value: `${(metrics.avg_trade_duration_hours || 0).toFixed(1)}h`,
+      icon: Clock,
+      color: "text-secondary",
+      bgColor: "bg-secondary/10",
+    },
+  ]
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       {tradeStats.map((stat, index) => {

@@ -1,44 +1,58 @@
 import { TrendingDown, AlertTriangle, Target, Percent } from "lucide-react"
 
-const metrics = [
-  {
-    label: "Max Drawdown",
-    value: "12.5%",
-    change: "-2.3%",
-    icon: TrendingDown,
-    color: "text-destructive",
-    bgColor: "bg-destructive/10",
-  },
-  {
-    label: "Risk/Reward Ratio",
-    value: "1:2.4",
-    change: "+0.3",
-    icon: Target,
-    color: "text-accent",
-    bgColor: "bg-accent/10",
-  },
-  {
-    label: "Win Rate",
-    value: "62.5%",
-    change: "+5.2%",
-    icon: Percent,
-    color: "text-primary",
-    bgColor: "bg-primary/10",
-  },
-  {
-    label: "Value at Risk",
-    value: "$2,450",
-    change: "-18.5%",
-    icon: AlertTriangle,
-    color: "text-secondary",
-    bgColor: "bg-secondary/10",
-  },
-]
+type RiskMetricsProps = {
+  analysis: any | null
+}
 
-export function RiskMetrics() {
+export function RiskMetrics({ analysis }: RiskMetricsProps) {
+  if (!analysis) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="p-6 rounded-xl bg-card/50 border border-border/30 text-center text-muted-foreground">
+          No analysis data available
+        </div>
+      </div>
+    )
+  }
+
+  const metrics = analysis.metrics || {}
+  const riskResults = analysis.risk_results || {}
+  const scoreResult = analysis.score_result || {}
+
+  const metricsData = [
+    {
+      label: "Max Drawdown",
+      value: `${(metrics.max_drawdown_pct || 0).toFixed(1)}%`,
+      icon: TrendingDown,
+      color: "text-destructive",
+      bgColor: "bg-destructive/10",
+    },
+    {
+      label: "Risk/Reward Ratio",
+      value: `1:${(metrics.avg_risk_reward_ratio || 0).toFixed(2)}`,
+      icon: Target,
+      color: "text-accent",
+      bgColor: "bg-accent/10",
+    },
+    {
+      label: "Win Rate",
+      value: `${(metrics.win_rate || 0).toFixed(1)}%`,
+      icon: Percent,
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+    },
+    {
+      label: "Risk Score",
+      value: scoreResult.grade || "N/A",
+      icon: AlertTriangle,
+      color: "text-secondary",
+      bgColor: "bg-secondary/10",
+    },
+  ]
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      {metrics.map((metric, index) => {
+      {metricsData.map((metric, index) => {
         const Icon = metric.icon
         return (
           <div
@@ -52,9 +66,6 @@ export function RiskMetrics() {
               </div>
             </div>
             <p className="text-2xl font-bold text-foreground mb-2">{metric.value}</p>
-            <p className={`text-xs font-medium ${metric.change.startsWith("+") ? "text-success" : "text-destructive"}`}>
-              {metric.change} from last month
-            </p>
           </div>
         )
       })}

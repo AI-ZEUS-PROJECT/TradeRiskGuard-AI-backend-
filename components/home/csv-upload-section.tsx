@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import { Upload, Download, FileText, CheckCircle } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/contexts/auth-context"
+import { apiClient } from "@/lib/api"
 
 export function CSVUploadSection() {
   const router = useRouter()
@@ -14,6 +15,7 @@ export function CSVUploadSection() {
   const [dragActive, setDragActive] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
@@ -41,23 +43,59 @@ export function CSVUploadSection() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0])
+      setError(null)
     }
   }
 
   const handleUpload = async () => {
-    if (!file) return
+    setError(null)
+
+    if (!file) {
+      setError("Please select a CSV file to analyze.")
+      return
+    }
 
     // Check if user is authenticated
     if (!isAuthenticated) {
       router.push("/signin")
       return
+      return
+    }
+
+    // Basic client-side validation
+    if (!(file.type === "text/csv" || file.name.toLowerCase().endsWith(".csv"))) {
+      setError("Only CSV files are supported.")
+      return
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setError("File is too large. Maximum size is 10MB.")
+      return
     }
 
     setIsLoading(true)
-    // Simulate analysis delay
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    setIsLoading(false)
-    router.push("/dashboard")
+
+    try {
+      const response = await apiClient.analyzeTrades({ file })
+
+      if (!response.success || !response.data) {
+        setError(response.error || response.message || "Failed to analyze trades. Please try again.")
+        return
+      }
+
+      const analysisId = (response.data as any).analysis_id
+
+      // Redirect to dashboard, optionally with analysis id in query
+      if (analysisId) {
+        router.push(`/dashboard?analysisId=${encodeURIComponent(analysisId)}`)
+      } else {
+        router.push("/dashboard")
+      }
+    } catch (e) {
+      setError("Something went wrong while analyzing your trades. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const downloadSample = () => {
@@ -88,6 +126,12 @@ export function CSVUploadSection() {
       </div>
 
       <div className="max-w-2xl mx-auto animate-slideUp" style={{ animationDelay: "0.1s" }}>
+        {error && (
+          <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+
         {/* Upload Zone */}
         <div
           className={`relative border-2 border-dashed rounded-xl p-8 sm:p-12 transition-all duration-300 ${

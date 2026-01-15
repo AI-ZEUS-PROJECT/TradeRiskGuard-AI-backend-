@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Shield, LogOut, User } from "lucide-react"
+import { usePathname, useRouter } from "next/navigation"
+import { Shield, LogOut, User, Settings } from "lucide-react"
 import { useState } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
@@ -16,6 +16,7 @@ import {
 
 export function Header() {
   const pathname = usePathname()
+  const router = useRouter()
   const { isAuthenticated, user, signOut } = useAuth()
   /* Added mobile menu state */
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -74,6 +75,11 @@ export function Header() {
                     <div className="font-medium">{user?.name}</div>
                     <div className="text-xs text-muted-foreground">{user?.email}</div>
                   </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => router.push('/settings')}>
+                    <Settings className="w-4 h-4" />
+                    Settings
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={signOut} variant="destructive">
                     <LogOut className="w-4 h-4" />
                     Sign Out
@@ -106,6 +112,11 @@ export function Header() {
                     <div className="font-medium">{user?.name}</div>
                     <div className="text-xs text-muted-foreground">{user?.email}</div>
                   </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => router.push('/settings')}>
+                    <Settings className="w-4 h-4" />
+                    Settings
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={signOut} variant="destructive">
                     <LogOut className="w-4 h-4" />

@@ -1,6 +1,11 @@
 "use client"
 
-import { useState } from "react"
+type Props = {
+  selectedSections: string[]
+  onToggle: (id: string) => void
+  format: string
+  onFormatChange: (format: string) => void
+}
 
 const sections = [
   {
@@ -41,13 +46,7 @@ const sections = [
   },
 ]
 
-export function ReportSections() {
-  const [selectedSections, setSelectedSections] = useState(sections.map((s) => s.id))
-
-  const toggleSection = (id: string) => {
-    setSelectedSections((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]))
-  }
-
+export function ReportSections({ selectedSections, onToggle, format, onFormatChange }: Props) {
   return (
     <div>
       <h2 className="text-2xl font-bold text-foreground mb-6">Report Sections</h2>
@@ -56,14 +55,14 @@ export function ReportSections() {
           <div
             key={section.id}
             className="p-4 rounded-lg border border-border/30 bg-card/30 hover:border-primary/20 transition-all duration-300 cursor-pointer"
-            onClick={() => toggleSection(section.id)}
+            onClick={() => onToggle(section.id)}
           >
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0 mt-1">
                 <input
                   type="checkbox"
                   checked={selectedSections.includes(section.id)}
-                  onChange={() => toggleSection(section.id)}
+                  onChange={() => onToggle(section.id)}
                   className="w-5 h-5 rounded border-border bg-card cursor-pointer accent-primary"
                 />
               </div>
@@ -86,10 +85,14 @@ export function ReportSections() {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">Report Format</label>
-            <select className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
-              <option>PDF (Recommended)</option>
-              <option>Excel (.xlsx)</option>
-              <option>HTML</option>
+            <select
+              value={format}
+              onChange={(e) => onFormatChange(e.target.value)}
+              className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="pdf">PDF (Recommended)</option>
+              <option value="markdown">Markdown</option>
+              <option value="html">HTML</option>
             </select>
           </div>
 

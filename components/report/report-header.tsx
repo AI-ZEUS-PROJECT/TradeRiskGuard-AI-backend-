@@ -9,10 +9,10 @@ export function ReportHeader() {
             <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2">Generate Report</h1>
             <p className="text-muted-foreground">Create a comprehensive analysis report of your trading performance</p>
           </div>
-          <button className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-300 font-semibold">
+          {/* <button className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-300 font-semibold">
             <Download className="w-4 h-4" />
             Download PDF
-          </button>
+          </button> */}
         </div>
       </div>
     </div>
