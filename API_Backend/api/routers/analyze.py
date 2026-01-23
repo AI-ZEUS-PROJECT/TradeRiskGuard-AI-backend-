@@ -168,7 +168,7 @@ async def analyze_trades(
 
             contents = await file.read()
             df = pd.read_csv(io.StringIO(contents.decode("utf-8")))
-
+            
             filename = file.filename
             original_filename = file.filename
             file_size = len(contents)
