@@ -19,7 +19,7 @@ from api.models import User, Analysis    # Ensure existing models are loaded
 # -------------------------------
 # Import alert models
 # -------------------------------
-from api.modelss.alert_models import PredictiveAlert, AlertSettings, AlertHistory
+from api.models.alert_models import PredictiveAlert, AlertSettings, AlertHistory
 
 # List of tables in the correct creation order
 tables_to_create = [User, Analysis, PredictiveAlert, AlertSettings, AlertHistory]

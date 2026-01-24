@@ -12,7 +12,7 @@ from api.database import Base
 Update main models.py to import alert models
 """
 # Add at the top
-from .modelss.alert_models import PredictiveAlert, AlertSettings, AlertHistory
+from .alert_models import PredictiveAlert, AlertSettings, AlertHistory
 
 # Keep all existing models, just add these imports
 

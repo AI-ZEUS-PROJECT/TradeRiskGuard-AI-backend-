@@ -12,10 +12,10 @@ from api import schemas
 from api.database import get_db
 from api.auth import get_current_active_user
 from api.models import User, Analysis
-from api.modelss.integration_models import DerivConnection, DerivTrade, SyncLog, WebhookEvent
+from api.models.integration_models import DerivConnection, DerivTrade, SyncLog, WebhookEvent
 from api.utils.encryption import encryption_service
 from api.utils.deriv_client import DerivAPIClient
-from api.schemass.integrations import (
+from api.schemas.integrations import (
     DerivConnectRequest, ConnectionStatusResponse, SyncResultResponse,
     ConnectionResponse, SyncTradesRequest, UpdateConnectionRequest,
     WebhookEventRequest, WebhookResponse, ConnectionStats
