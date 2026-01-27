@@ -128,6 +128,12 @@ async def get_user_profile(
     """
     Get current user's profile
     """
+    if current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     response_data = {
         "id": current_user.id,
         "email": current_user.email,
@@ -147,6 +153,12 @@ async def get_user_settings(
     """
     Get user settings
     """
+    if current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     settings = db.query(models.UserSettings)\
         .filter(models.UserSettings.user_id == current_user.id)\
         .first()
@@ -182,6 +194,12 @@ async def update_user_settings(
     """
     Update user settings
     """
+    if current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     settings = db.query(models.UserSettings)\
         .filter(models.UserSettings.user_id == current_user.id)\
         .first()

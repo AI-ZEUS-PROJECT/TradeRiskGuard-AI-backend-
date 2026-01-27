@@ -34,7 +34,13 @@ export function CSVUploadSection() {
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const droppedFile = e.dataTransfer.files[0]
-      if (droppedFile.type === "text/csv" || droppedFile.name.endsWith(".csv")) {
+      if (
+        droppedFile.type === "text/csv" ||
+        droppedFile.name.toLowerCase().endsWith(".csv") ||
+        droppedFile.type === "text/html" ||
+        droppedFile.name.toLowerCase().endsWith(".html") ||
+        droppedFile.name.toLowerCase().endsWith(".htm")
+      ) {
         setFile(droppedFile)
       }
     }
@@ -51,7 +57,7 @@ export function CSVUploadSection() {
     setError(null)
 
     if (!file) {
-      setError("Please select a CSV file to analyze.")
+      setError("Please select a file to analyze.")
       return
     }
 
@@ -59,12 +65,14 @@ export function CSVUploadSection() {
     if (!isAuthenticated) {
       router.push("/signin")
       return
-      return
     }
 
     // Basic client-side validation
-    if (!(file.type === "text/csv" || file.name.toLowerCase().endsWith(".csv"))) {
-      setError("Only CSV files are supported.")
+    const validTypes = [".csv", ".html", ".htm"]
+    const isValid = validTypes.some((type) => file.name.toLowerCase().endsWith(type))
+
+    if (!isValid) {
+      setError("Only CSV and MT5 HTML files are supported.")
       return
     }
 
@@ -121,7 +129,7 @@ export function CSVUploadSection() {
       <div className="text-center mb-12 animate-slideUp">
         <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">Upload Your Trades</h2>
         <p className="text-muted-foreground text-lg">
-          Drag and drop your CSV file or click to select from your computer
+          Drag and drop your CSV or MT5 HTML Report
         </p>
       </div>
 
@@ -134,11 +142,10 @@ export function CSVUploadSection() {
 
         {/* Upload Zone */}
         <div
-          className={`relative border-2 border-dashed rounded-xl p-8 sm:p-12 transition-all duration-300 ${
-            dragActive
-              ? "border-primary bg-primary/5 scale-105"
-              : "border-border/30 hover:border-primary/50 bg-card/20 hover:bg-card/40"
-          }`}
+          className={`relative border-2 border-dashed rounded-xl p-8 sm:p-12 transition-all duration-300 ${dragActive
+            ? "border-primary bg-primary/5 scale-105"
+            : "border-border/30 hover:border-primary/50 bg-card/20 hover:bg-card/40"
+            }`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
@@ -147,7 +154,7 @@ export function CSVUploadSection() {
           <input
             type="file"
             id="csv-input"
-            accept=".csv"
+            accept=".csv,.html,.htm"
             onChange={handleChange}
             className="absolute inset-0 opacity-0 cursor-pointer"
           />
@@ -161,7 +168,7 @@ export function CSVUploadSection() {
               </div>
 
               <div className="text-center">
-                <p className="text-lg font-semibold text-foreground">{file ? file.name : "Drop your CSV file here"}</p>
+                <p className="text-lg font-semibold text-foreground">{file ? file.name : "Drop CSV or MT5 Report here"}</p>
                 <p className="text-sm text-muted-foreground mt-1">
                   {file ? "File selected. Ready to analyze!" : "or click to browse your computer"}
                 </p>
@@ -197,11 +204,10 @@ export function CSVUploadSection() {
           <button
             onClick={handleUpload}
             disabled={!file || isLoading}
-            className={`flex-1 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
-              file && !isLoading
-                ? "bg-gradient-to-r from-primary to-accent text-primary-foreground hover:shadow-lg hover:shadow-primary/50 hover:scale-105 active:scale-95 cursor-pointer"
-                : "bg-muted text-muted-foreground cursor-not-allowed opacity-50"
-            }`}
+            className={`flex-1 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${file && !isLoading
+              ? "bg-gradient-to-r from-primary to-accent text-primary-foreground hover:shadow-lg hover:shadow-primary/50 hover:scale-105 active:scale-95 cursor-pointer"
+              : "bg-muted text-muted-foreground cursor-not-allowed opacity-50"
+              }`}
           >
             {isLoading ? (
               <>
@@ -221,17 +227,16 @@ export function CSVUploadSection() {
             className="flex-1 py-3 rounded-lg font-semibold border border-border hover:bg-card/50 text-foreground transition-all duration-300 flex items-center justify-center gap-2 hover:border-primary/50 hover:scale-105 active:scale-95"
           >
             <Download className="w-4 h-4" />
-            Download Sample
+            Download CSV Sample
           </button>
         </div>
 
         {/* Info Box */}
         <div className="mt-8 p-6 bg-card/30 border border-border/20 rounded-lg hover:border-primary/30 transition-colors">
-          <h3 className="font-semibold text-foreground mb-3">CSV Format Requirements</h3>
+          <h3 className="font-semibold text-foreground mb-3">Supported Formats</h3>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>• Include columns: Date, Symbol, Quantity, EntryPrice, ExitPrice, PnL, TradeType</li>
-            <li>• Date format: YYYY-MM-DD</li>
-            <li>• TradeType: Long or Short</li>
+            <li>• <strong>CSV:</strong> Standard TradeGuard format (Date, Symbol, PnL, etc.)</li>
+            <li>• <strong>MT5 Report:</strong> Export your History as HTML from MetaTrader 5</li>
             <li>• Maximum file size: 10 MB</li>
           </ul>
         </div>

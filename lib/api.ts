@@ -164,7 +164,7 @@ class APIClient {
   }
 
   private getAuthHeaders(base: HeadersInit = {}): HeadersInit {
-    const headers: HeadersInit = { ...base }
+    const headers: any = { ...base }
     if (this.getAuthToken) {
       const token = this.getAuthToken()
       if (token) {
@@ -194,7 +194,15 @@ class APIClient {
       const data = await response.json()
 
       if (!response.ok) {
-        const errorMessage = data.detail || data.error || data.message || 'An error occurred'
+        let errorMessage = data.detail || data.error || data.message || 'An error occurred'
+
+        // Handle Pydantic validation errors (array of objects)
+        if (typeof errorMessage !== 'string') {
+          errorMessage = typeof errorMessage === 'object'
+            ? JSON.stringify(errorMessage)
+            : String(errorMessage)
+        }
+
         return {
           success: false,
           error: errorMessage,
@@ -431,6 +439,46 @@ class APIClient {
   async getDashboardInsights(limit: number = 3): Promise<APIResponse<DashboardInsight[]>> {
     return this.request<DashboardInsight[]>(`/api/dashboard/insights?limit=${limit}`, {
       method: 'GET',
+    })
+  }
+
+  // ---- Deriv Integration endpoints ----
+  async connectDeriv(payload: {
+    api_token: string
+    connection_name: string
+    app_id?: string
+    account_id?: string
+    auto_sync?: boolean
+    sync_frequency?: string
+    sync_days_back?: number
+  }): Promise<APIResponse<any>> {
+    return this.request<any>('/api/integrations/deriv/connect', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  }
+
+  async listDerivConnections(): Promise<APIResponse<{ connections: any[]; total: number }>> {
+    return this.request<{ connections: any[]; total: number }>('/api/integrations/deriv/connections', {
+      method: 'GET',
+    })
+  }
+
+  async syncDeriv(payload: {
+    connection_id?: string
+    days_back?: number
+    force_full_sync?: boolean
+    analyze_after_sync?: boolean
+  }): Promise<APIResponse<any>> {
+    return this.request<any>('/api/integrations/deriv/sync', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  }
+
+  async disconnectDeriv(connectionId: string): Promise<APIResponse<any>> {
+    return this.request<any>(`/api/integrations/deriv/connections/${connectionId}`, {
+      method: 'DELETE',
     })
   }
 }
