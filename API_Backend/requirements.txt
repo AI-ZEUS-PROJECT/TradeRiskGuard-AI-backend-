@@ -2,6 +2,7 @@
 fastapi
 uvicorn[standard]
 email-validator
+python-multipart
 
 # Database
 sqlalchemy
