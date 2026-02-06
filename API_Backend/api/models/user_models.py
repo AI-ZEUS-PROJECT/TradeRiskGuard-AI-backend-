@@ -12,7 +12,7 @@ from api.database import Base
 Update main models.py to import alert models
 """
 # Add at the top
-from .modelss.alert_models import PredictiveAlert, AlertSettings, AlertHistory
+from .alert_models import PredictiveAlert, AlertSettings, AlertHistory
 
 # Keep all existing models, just add these imports
 
@@ -51,6 +51,7 @@ class UserSettings(Base):
     # AI settings
     ai_enabled = Column(Boolean, default=True)
     preferred_model = Column(String, default="gpt-4o-mini")
+    openai_api_key_encrypted = Column(String, nullable=True)
     
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

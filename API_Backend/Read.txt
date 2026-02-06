@@ -1,3 +1,4 @@
 I have added the deriv test. afer testing i would need to revoke api key. if test works then i'd move on to mt5 integration after that its done.
 We would then deal with the integrations of the ai tools Gemini and Openai. this would make it the users choice
 Then we can think of deployment.
+

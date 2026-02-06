@@ -18,6 +18,7 @@ yarn-error.log*
 
 # env files
 .env*
+API_Backend/.env
 
 # vercel
 .vercel
@@ -33,20 +34,15 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Test result files
-*.test.json
-*_results.json
+# Test result files in the test directory
+API_Backend/tests/*_results.json
+API_Backend/tests/test_results.json
 
-# Ignore all test files in API_Backend
-*_test*.py
-test_*.py
-test_results.json
+# Virtual environment
+.venv/
 
-requirements.txt
-C:\Users\user\Desktop\TradeRiskGuard-AI\API_Backend\requirements.txt
-C:\Users\user\Desktop\TradeRiskGuard-AI\API_Backend\.env
-API_Backend/requirements.txt
-.env
-API_Backend/.env
-TradeRiskGuard-AI\API_Backend\requirements.txt
-TradeRiskGuard-AI\API_Backend\.env
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+API_Backend/tradeguard.db

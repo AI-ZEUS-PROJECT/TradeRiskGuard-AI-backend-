@@ -92,29 +92,42 @@ class AIRiskExplainer:
         if self.mock_mode:
             return self._generate_mock_explanation(metrics, risk_results, score_result)
 
-        prompt = ChatPromptTemplate.from_messages([
-            self.system_prompt,
-            self.human_prompt_template
-        ])
+        try:
+            prompt = ChatPromptTemplate.from_messages([
+                self.system_prompt,
+                self.human_prompt_template
+            ])
 
-        messages = prompt.format_prompt(
-            metrics_summary=self._format_metrics_for_ai(metrics),
-            risk_summary=self._format_risks_for_ai(risk_results),
-            risk_score=score_result["score"],
-            risk_grade=score_result["grade"],
-            total_risks=score_result["total_risks"],
-            format_instructions=self.format_instructions
-        ).to_messages()
+            messages = prompt.format_prompt(
+                metrics_summary=self._format_metrics_for_ai(metrics),
+                risk_summary=self._format_risks_for_ai(risk_results),
+                risk_score=score_result["score"],
+                risk_grade=score_result["grade"],
+                total_risks=score_result["total_risks"],
+                format_instructions=self.format_instructions
+            ).to_messages()
 
-        response = self.llm.invoke(messages)
+            response = self.llm.invoke(messages)
 
-        parsed = self.output_parser.parse(response.content)
-        parsed = parsed.model_dump()
+            parsed = self.output_parser.parse(response.content)
+            parsed = parsed.model_dump()
 
-        parsed["ai_model"] = "gpt-4o-mini"
-        parsed["timestamp"] = self._get_timestamp()
+            parsed["ai_model"] = "gpt-4o-mini"
+            parsed["timestamp"] = self._get_timestamp()
 
-        return parsed
+            return parsed
+
+        except Exception as e:
+            # Log the full error to backend console for debugging
+            print(f"⚠️ AI Generation Failed (OpenAI Error): {str(e)}")
+            
+            # Return safe fallback with friendly message
+            return self._generate_mock_explanation(
+                metrics, 
+                risk_results, 
+                score_result, 
+                fallback_reason="AI Limit Reached"
+            )
 
     # --- helper methods unchanged ---
 
@@ -321,8 +334,9 @@ class AIRiskExplainer:
     def _generate_mock_explanation(self, 
                                  metrics: Dict[str, Any], 
                                  risk_results: Dict[str, Any],
-                                 score_result: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate mock explanations when API key is not available"""
+                                 score_result: Dict[str, Any],
+                                 fallback_reason: Optional[str] = None) -> Dict[str, Any]:
+        """Generate mock explanations when API key is not available or quota exceeded"""
         
         # Generate risk-specific explanations even in mock mode
         risk_explanations = []
@@ -368,11 +382,16 @@ class AIRiskExplainer:
         
         response = mock_responses.get(grade, mock_responses['B'])
         
+        # Apply custom prefix if fallback triggered
+        if fallback_reason:
+            prefix = f"⚠️ [Offline Mode: {fallback_reason}] "
+            response['risk_summary'] = prefix + response['risk_summary']
+        
         return {
             **response,
             'risk_explanations': risk_explanations,
-            'full_response': "Mock explanation generated - add OpenAI API key for AI-powered insights",
-            'ai_model': 'demo_mode',
+            'full_response': "Mock explanation generated - AI currently unavailable",
+            'ai_model': 'offline_fallback',
             'timestamp': self._get_timestamp()
         }
     

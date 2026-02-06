@@ -14,6 +14,7 @@ class RiskScorer:
             'high_drawdown': 20,      # Capital preservation
             'revenge_trading': 15,    # Emotional control
             'poor_rr_ratio': 10,      # Risk-reward management
+            'event_trading': 10,      # News/Event risk
             'low_win_rate': 5,        # Performance
             'concentration_risk': 5,  # Diversification
             'overtrading': 5          # Trading frequency

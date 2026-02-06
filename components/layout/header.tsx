@@ -30,6 +30,7 @@ export function Header() {
     { href: "/", label: "Home", name: "Home" },
     { href: "/about", label: "About", name: "About" },
     { href: "/dashboard", label: "Dashboard", name: "Dashboard" },
+    { href: "/history", label: "History", name: "History" },
     { href: "/report", label: "Report", name: "Report" },
   ]
 
@@ -52,16 +53,15 @@ export function Header() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`text-sm font-medium transition-all duration-300 px-3 py-2 rounded-md ${
-                  pathname === item.href
+                className={`text-sm font-medium transition-all duration-300 px-3 py-2 rounded-md ${pathname === item.href
                     ? "text-primary bg-primary/10"
                     : "text-muted-foreground hover:text-foreground hover:bg-card/30"
-                }`}
+                  }`}
               >
                 {item.label}
               </Link>
             ))}
-            
+
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -157,11 +157,10 @@ export function Header() {
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`block text-sm font-medium transition-all duration-300 px-3 py-2 rounded-md ${
-                  pathname === item.href
+                className={`block text-sm font-medium transition-all duration-300 px-3 py-2 rounded-md ${pathname === item.href
                     ? "text-primary bg-primary/10"
                     : "text-muted-foreground hover:text-foreground hover:bg-card/30"
-                }`}
+                  }`}
               >
                 {item.label}
               </Link>

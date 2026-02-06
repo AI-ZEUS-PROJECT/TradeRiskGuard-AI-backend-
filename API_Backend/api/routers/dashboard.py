@@ -21,6 +21,12 @@ async def get_dashboard_summary(
     """
     Get dashboard summary data
     """
+    if current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     # Get user's analyses
     analyses = db.query(models.Analysis)\
         .filter(models.Analysis.user_id == current_user.id)\
@@ -114,6 +120,12 @@ async def get_performance_metrics(
     """
     Get performance metrics over time
     """
+    if current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     # Calculate date range
     now = datetime.utcnow()
     if period == "day":
@@ -184,6 +196,12 @@ async def get_insights(
     """
     Get personalized insights based on user's trading history
     """
+    if current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     # Get recent analyses
     analyses = db.query(models.Analysis)\
         .filter(

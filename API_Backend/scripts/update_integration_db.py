@@ -8,7 +8,7 @@ import os
 sys.path.append(os.path.dirname(__file__))
 
 from api.database import engine, Base
-from api.modelss.integration_models import DerivConnection, DerivTrade, SyncLog, WebhookEvent
+from api.models.integration_models import DerivConnection, DerivTrade, SyncLog, WebhookEvent
 
 print("🔧 Creating integration database tables...")
 try:

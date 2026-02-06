@@ -2,12 +2,10 @@
 API endpoints for risk assessment
 """
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
 from typing import Optional
 import numpy as np
 
-from api import schemas, models, auth
-from api.database import get_db
+from api import schemas, auth
 from core.risk_scorer import RiskScorer
 from core.ai_explainer import AIRiskExplainer
 
@@ -16,8 +14,7 @@ router = APIRouter()
 @router.post("/calculate", response_model=schemas.APIResponse)
 async def calculate_risk_score(
     risk_details: dict,
-    current_user: Optional[schemas.UserResponse] = Depends(auth.get_optional_user),
-    db: Session = Depends(get_db)
+    current_user: Optional[schemas.UserResponse] = Depends(auth.get_optional_user)
 ):
     """
     Calculate risk score from risk details
@@ -42,8 +39,7 @@ async def calculate_risk_score(
 @router.post("/explanations", response_model=schemas.APIResponse)
 async def get_risk_explanations(
     request: dict,
-    current_user: Optional[schemas.UserResponse] = Depends(auth.get_optional_user),
-    db: Session = Depends(get_db)
+    current_user: Optional[schemas.UserResponse] = Depends(auth.get_optional_user)
 ):
     """
     Get AI explanations for specific risks
@@ -82,8 +78,7 @@ async def get_risk_explanations(
 @router.post("/simulate", response_model=schemas.APIResponse)
 async def simulate_risk_improvement(
     simulation: schemas.RiskSimulationRequest,
-    current_user: Optional[schemas.UserResponse] = Depends(auth.get_optional_user),
-    db: Session = Depends(get_db)
+    current_user: Optional[schemas.UserResponse] = Depends(auth.get_optional_user)
 ):
     """
     Simulate what-if scenarios for risk improvement
@@ -93,7 +88,6 @@ async def simulate_risk_improvement(
         improvements = simulation.improvements
         
         # Simple simulation: each percentage improvement adds to score
-        # More sophisticated logic can be added here
         improvement_total = sum(improvements.values())
         simulated_score = min(100, current_score + (improvement_total * 0.5))
         

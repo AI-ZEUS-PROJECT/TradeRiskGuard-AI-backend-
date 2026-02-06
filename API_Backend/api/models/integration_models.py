@@ -53,8 +53,8 @@ class DerivConnection(Base):
     
     # Relationships
     user = relationship("User", backref="deriv_connections")
-    synced_trades = relationship("DerivTrade", back_populates="connection")
-    sync_logs = relationship("SyncLog", back_populates="connection")
+    synced_trades = relationship("DerivTrade", back_populates="connection", cascade="all, delete-orphan")
+    sync_logs = relationship("SyncLog", back_populates="connection", cascade="all, delete-orphan")
     
     def to_dict(self, include_sensitive=False):
         """Convert to dictionary, optionally including sensitive info"""

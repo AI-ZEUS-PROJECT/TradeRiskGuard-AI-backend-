@@ -10,10 +10,10 @@ from typing import Optional, List, Dict, Any
 from api import schemas
 from api.database import get_db
 from api.auth import get_current_active_user
-from api.modelss.alert_models import PredictiveAlert, AlertSettings, AlertHistory
+from api.models.alert_models import PredictiveAlert, AlertSettings, AlertHistory
 from api.models import User, Analysis
 from api.utils.prediction_engine import PredictionEngine
-from api.schemass.alerts import (
+from api.schemas.alerts import (
     GenerateAlertsRequest, AlertResponse, GenerateAlertsResponse,
     AcknowledgeAlertRequest, SnoozeAlertRequest, AlertSettingsUpdate,
     AlertSettingsResponse, UserAlertsResponse, AlertStats
@@ -109,6 +109,12 @@ async def generate_predictive_alerts(
     """
     Generate predictive alerts based on user's trading patterns
     """
+    if current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     try:
         # Check if user has settings
         settings = get_or_create_alert_settings(db, current_user.id)
@@ -296,6 +302,12 @@ async def get_user_alerts(
     """
     Get alerts for the current user with filtering options
     """
+    if current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     try:
         # Base query
         query = db.query(PredictiveAlert).filter(
@@ -363,6 +375,12 @@ async def acknowledge_alert(
     """
     Acknowledge an alert
     """
+    if current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     try:
         alert = db.query(PredictiveAlert).filter(
             PredictiveAlert.id == alert_id,
@@ -413,6 +431,12 @@ async def snooze_alert(
     """
     Snooze an alert for specified duration
     """
+    if current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     try:
         alert = db.query(PredictiveAlert).filter(
             PredictiveAlert.id == alert_id,
@@ -468,6 +492,12 @@ async def get_alert_settings(
     """
     Get alert settings for current user
     """
+    if current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     try:
         settings = get_or_create_alert_settings(db, current_user.id)
         
@@ -507,6 +537,12 @@ async def update_alert_settings(
     """
     Update alert settings for current user
     """
+    if current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     try:
         settings = get_or_create_alert_settings(db, current_user.id)
         
@@ -557,6 +593,12 @@ async def get_alert_statistics(
     """
     Get alert statistics for current user
     """
+    if current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     try:
         stats = calculate_alert_stats(db, current_user.id)
         
@@ -605,6 +647,12 @@ async def delete_alert(
     """
     Delete an alert (soft delete by marking as expired)
     """
+    if current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     try:
         alert = db.query(PredictiveAlert).filter(
             PredictiveAlert.id == alert_id,

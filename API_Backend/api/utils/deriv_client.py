@@ -1,214 +1,240 @@
 """
-Deriv API client for fetching trade data
+Deriv WebSocket API Client
 """
-import requests
+import asyncio
 import json
-from datetime import datetime, timedelta
+import websockets
+from datetime import datetime
 from typing import List, Dict, Any, Optional
-import time
-import hashlib
 
 class DerivAPIClient:
-    """Client for interacting with Deriv API"""
+    """
+    Async Client for interacting with Deriv WebSocket API
+    Reference: https://api.deriv.com/
+    """
     
-    def __init__(self, api_token: str, app_id: str, account_id: Optional[str] = None):
+    def __init__(self, api_token: str, app_id: str = "1089", account_id: Optional[str] = None):
         self.api_token = api_token
         self.app_id = app_id
         self.account_id = account_id
-        
-        # API endpoints
-        self.base_url = "https://deriv-api.crypto.com"
-        self.websocket_url = "wss://deriv-api.crypto.com/websockets/v3"
-        
-        # Headers
-        self.headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "Authorization": f"Token {self.api_token}"
-        }
+        # Production WebSocket URL
+        self.websocket_url = f"wss://ws.binaryws.com/websockets/v3?app_id={app_id}"
     
-    def test_connection(self) -> Dict[str, Any]:
-        """Test API connection and get account info"""
+    async def _call_api(self, request: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Generic method to send a request and wait for a response.
+        Note: This is a simplified one-shot connection. For streaming, we'd keep the socket open.
+        """
         try:
-            response = requests.get(
-                f"{self.base_url}/api/v1/user",
-                headers=self.headers,
-                timeout=10
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                return {
-                    "success": True,
-                    "account_info": data.get("user", {}),
-                    "message": "Connection successful"
-                }
-            else:
-                return {
-                    "success": False,
-                    "error": f"API returned {response.status_code}",
-                    "details": response.text[:200]
-                }
+            async with websockets.connect(self.websocket_url) as websocket:
+                # 1. Send Request
+                await websocket.send(json.dumps(request))
                 
-        except requests.exceptions.ConnectionError:
-            return {
-                "success": False,
-                "error": "Connection failed",
-                "details": "Cannot connect to Deriv API"
-            }
+                # 2. Await Response
+                response = await websocket.recv()
+                data = json.loads(response)
+                
+                if "error" in data:
+                    print(f"Deriv API Error ({request.get('req_id')}): {data['error']['message']}")
+                    return {"success": False, "error": data['error']['message'], "code": data['error']['code']}
+                
+                return {"success": True, "data": data}
+                
         except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    async def test_connection(self) -> Dict[str, Any]:
+        """Test API connection and Authorize to get account info"""
+        try:
+            # We must AUTHORIZE to test if the token is valid
+            print(f"DEBUG: Testing connection with token length: {len(self.api_token)}")
+            print(f"DEBUG: Token prefix: {self.api_token[:4]}...")
+            
+            request = {
+                "authorize": self.api_token,
+                "req_id": 1
+            }
+            
+            result = await self._call_api(request)
+            
+            if not result.get("success"):
+                err_msg = result.get("error", "Unknown error")
+                debug_info = f"TokenLen={len(self.api_token)} Type={type(self.api_token).__name__} ValErr={err_msg}"
+                print(f"DEBUG: {debug_info}")
+                # Return this debug info so user can see it
+                return {"success": False, "error": debug_info}
+            
+            # Extract relevant account info
+            auth_data = result["data"].get("authorize", {})
+            account_info = {
+                "loginid": auth_data.get("loginid"),
+                "fullname": auth_data.get("fullname"),
+                "currency": auth_data.get("currency"),
+                "balance": auth_data.get("balance"),
+                "is_virtual": auth_data.get("is_virtual") == 1
+            }
+            
+            # Get MT5 accounts
+            mt5_accounts = await self.get_mt5_accounts(request["authorize"])
+            
             return {
-                "success": False,
-                "error": str(e),
-                "details": "Unexpected error"
+                "success": True,
+                "account_info": account_info,
+                "mt5_accounts": mt5_accounts,
+                "message": "Connected successfully"
             }
-    
-    def get_account_balance(self) -> Optional[float]:
-        """Get account balance"""
-        try:
-            response = requests.get(
-                f"{self.base_url}/api/v1/balance",
-                headers=self.headers,
-                timeout=10
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                return float(data.get("balance", 0))
-            return None
-        except:
-            return None
-    
-    def get_transactions(self, days_back: int = 90) -> List[Dict[str, Any]]:
-        """Get transaction history"""
-        try:
-            end_time = int(time.time())
-            start_time = end_time - (days_back * 24 * 60 * 60)
-            
-            params = {
-                "limit": 1000,  # Max per request
-                "offset": 0,
-                "start_time": start_time,
-                "end_time": end_time,
-                "action": "buy"  # Get buy transactions (trades)
-            }
-            
-            all_transactions = []
-            has_more = True
-            
-            while has_more:
-                response = requests.get(
-                    f"{self.base_url}/api/v1/transactions",
-                    headers=self.headers,
-                    params=params,
-                    timeout=30
-                )
-                
-                if response.status_code != 200:
-                    break
-                
-                data = response.json()
-                transactions = data.get("transactions", [])
-                all_transactions.extend(transactions)
-                
-                # Check if there are more transactions
-                has_more = data.get("has_more", False)
-                if has_more:
-                    params["offset"] += params["limit"]
-                    time.sleep(0.5)  # Rate limiting
-            
-            return all_transactions
             
         except Exception as e:
-            print(f"Error fetching transactions: {e}")
+            return {"success": False, "error": str(e)}
+
+    async def get_mt5_accounts(self, token: str) -> List[Dict[str, Any]]:
+        """Fetch list of MT5 accounts linked to this Deriv account"""
+        try:
+             # We need a new connection or reuse one, but for simplicity via _call_api which creates one:
+             # Wait, _call_api connects fresh. We need to AUTH first.
+             # So let's do it cleanly here.
+            async with websockets.connect(self.websocket_url) as websocket:
+                await websocket.send(json.dumps({"authorize": token}))
+                auth_res = json.loads(await websocket.recv())
+                
+                if "error" in auth_res:
+                    print(f"MT5 List Auth Error: {auth_res['error']['message']}")
+                    return []
+                
+                # Request MT5 accounts
+                await websocket.send(json.dumps({"mt5_login_list": 1}))
+                res_str = await websocket.recv()
+                res = json.loads(res_str)
+                
+                if "error" in res:
+                    print(f"MT5 List Fetch Error: {res['error']['message']}")
+                    return []
+                
+                accounts = res.get("mt5_login_list", [])
+                
+                # Transform/Filter if needed
+                result = []
+                for acc in accounts:
+                    result.append({
+                        "login": acc.get("login"),
+                        "group": acc.get("group"),
+                        "balance": acc.get("balance"),
+                        "currency": acc.get("currency"),
+                        "leverage": acc.get("leverage"),
+                        "name": acc.get("name") # Sometimes available
+                    })
+                return result
+                
+        except Exception as e:
+            print(f"MT5 Account Fetch Error: {e}")
             return []
-    
-    def get_contract_info(self, contract_id: str) -> Optional[Dict[str, Any]]:
-        """Get details for a specific contract"""
+
+    async def get_trades(self, days_back: int = 30) -> List[Dict[str, Any]]:
+        """
+        Get closed trades using the 'profit_table' endpoint.
+        """
         try:
-            response = requests.get(
-                f"{self.base_url}/api/v1/contract/{contract_id}",
-                headers=self.headers,
-                timeout=10
-            )
-            
-            if response.status_code == 200:
-                return response.json()
-            return None
-        except:
-            return None
-    
-    def transform_transaction_to_trade(self, transaction: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Transform Deriv transaction to standardized trade format"""
-        try:
-            # Only process buy transactions (trades)
-            if transaction.get("action") != "buy":
-                return None
-            
-            contract_id = transaction.get("contract_id")
-            contract_info = self.get_contract_info(contract_id) if contract_id else None
-            
-            # Extract basic info
-            trade_data = {
-                "deriv_trade_id": str(transaction.get("transaction_id", "")),
-                "transaction_id": str(transaction.get("transaction_id", "")),
-                "contract_id": contract_id,
-                "symbol": transaction.get("symbol", ""),
-                "contract_type": transaction.get("contract_type", ""),
-                "currency": transaction.get("currency", "USD"),
-                "buy_price": float(transaction.get("buy_price", 0)),
-                "stake": float(abs(transaction.get("amount", 0))),  # Stake is absolute amount
-                "purchase_time": datetime.fromtimestamp(transaction.get("transaction_time", 0)),
-                "status": "open",  # Default, will be updated
-                "profit": 0,  # Will be calculated
-                "raw_data": transaction
-            }
-            
-            # Add contract info if available
-            if contract_info:
-                trade_data.update({
-                    "sell_price": float(contract_info.get("sell_price", 0)),
-                    "expiry_time": datetime.fromtimestamp(contract_info.get("expiry_time", 0)) if contract_info.get("expiry_time") else None,
-                    "sell_time": datetime.fromtimestamp(contract_info.get("sell_time", 0)) if contract_info.get("sell_time") else None,
-                    "barrier": float(contract_info.get("barrier", 0)) if contract_info.get("barrier") else None,
-                    "barrier2": float(contract_info.get("barrier2", 0)) if contract_info.get("barrier2") else None,
-                    "payout": float(contract_info.get("payout", 0)),
-                    "duration": contract_info.get("duration"),
-                    "exit_spot": float(contract_info.get("exit_spot", 0)) if contract_info.get("exit_spot") else None
-                })
+            # 1. Authorize First (Required for private data)
+            async with websockets.connect(self.websocket_url) as websocket:
+                # Auth
+                await websocket.send(json.dumps({"authorize": self.api_token}))
+                auth_res = json.loads(await websocket.recv())
                 
-                # Determine status
-                if contract_info.get("status") == "sold":
-                    trade_data["status"] = "sold"
-                    trade_data["profit"] = float(contract_info.get("profit", 0))
-                elif contract_info.get("is_expired", False):
-                    trade_data["status"] = "expired"
-                    trade_data["profit"] = -trade_data["stake"]  # Lost stake
-                elif contract_info.get("is_valid_to_sell", False):
-                    trade_data["status"] = "open"
-                else:
-                    trade_data["status"] = "unknown"
-            
-            return trade_data
-            
+                if "error" in auth_res:
+                    raise Exception(f"Auth failed: {auth_res['error']['message']}")
+                
+                # 2. Fetch Profit Table
+                # limit=3000 is a safe upper bound; for full history ensure paging if needed.
+                # date_from is "Epoch value of the starting date of the search."
+                date_from = int((datetime.now().timestamp()) - (days_back * 86400))
+                
+                req = {
+                    "profit_table": 1,
+                    "description": 1, 
+                    "limit": 100, # Start small for safety, or increase
+                    "date_from": date_from,
+                    "sort": "DESC" # Newest first
+                }
+                
+                await websocket.send(json.dumps(req))
+                res_str = await websocket.recv()
+                res = json.loads(res_str)
+                
+                if "error" in res:
+                    raise Exception(f"Fetch failed: {res['error']['message']}")
+                
+                transactions = res.get("profit_table", {}).get("transactions", [])
+                
+                # 3. Transform basic ProfitTable data to our schema
+                trades = []
+                for tx in transactions:
+                    trade = self.transform_transaction_to_trade(tx)
+                    if trade:
+                        trades.append(trade)
+                
+                return trades
+
         except Exception as e:
-            print(f"Error transforming transaction: {e}")
-            return None
-    
-    def get_trades(self, days_back: int = 90) -> List[Dict[str, Any]]:
-        """Get all trades for the specified period"""
-        transactions = self.get_transactions(days_back)
-        
-        trades = []
-        for transaction in transactions:
-            trade = self.transform_transaction_to_trade(transaction)
-            if trade:
-                trades.append(trade)
-        
-        return trades
-    
-    def get_recent_trades(self, hours_back: int = 24) -> List[Dict[str, Any]]:
-        """Get recent trades (for real-time updates)"""
-        # Convert hours to approximate days
-        days_back = max(1, (hours_back // 24) + 1)
-        return self.get_trades(days_back)
+            print(f"Detail Fetch Error: {e}")
+            return []
+
+    def transform_transaction_to_trade(self, tx: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Transform Deriv 'profit_table' transaction to internal Trade format.
+        """
+        try:
+            # Example tx:
+            # {
+            #   "contract_id": 12345,
+            #   "transaction_id": 67890,
+            #   "purchase_time": 1600000000,
+            #   "sell_time": 1600000500,
+            #   "buy_price": 10.0,
+            #   "sell_price": 15.0,
+            #   "sell_price": 15.0, # wait, this is 'payout' effectively users call it
+            #   "profit": 5.0, # net
+            #   "shortcode": "CALL_R_100_...",
+            #   "display_name": "Volatility 100 (1s) Index"
+            # }
+            
+            return {
+                "deriv_trade_id": str(tx.get("transaction_id")),
+                "transaction_id": str(tx.get("transaction_id")),
+                "contract_id": str(tx.get("contract_id")),
+                "symbol": self._parse_symbol(tx.get("display_name"), tx.get("shortcode")),
+                "contract_type": tx.get("shortcode", "").split("_")[0] if tx.get("shortcode") else "UNKNOWN",
+                "currency": "USD", # Usually implicit or part of auth; assume USD or modify to fetch from account
+                
+                # Prices
+                "buy_price": float(tx.get("buy_price", 0)), # This is the STAKE
+                "sell_price": float(tx.get("sell_price", 0)), # This is the PAYOUT if won? Or just sell value?
+                "stake": float(tx.get("buy_price", 0)), # Stake is the buy price for options
+                
+                # PnL
+                "profit": float(tx.get("profit", 0) or 0), # Does not include stake usually? Wait, profit_table 'sell_time' usually implies net result. 
+                # Profit in profit_table IS realized profit/loss.
+                
+                # Timestamps
+                "purchase_time": datetime.fromtimestamp(tx.get("purchase_time", 0)),
+                "sell_time": datetime.fromtimestamp(tx.get("sell_time", 0)),
+                "entry_time": datetime.fromtimestamp(tx.get("purchase_time", 0)), # Normalized
+                "exit_time": datetime.fromtimestamp(tx.get("sell_time", 0)),     # Normalized
+                
+                "status": "won" if float(tx.get("profit", 0) or 0) >= 0 else "lost",
+                "raw_data": tx
+            }
+        except Exception as e:
+             # print(f"Transformation Error: {e}")
+             return None
+
+    def _parse_symbol(self, display_name, shortcode):
+        """Attempts to return a clean symbol like 'R_100' or 'EURUSD'"""
+        # Shortcode ex: CALL_R_100_10_... -> R_100 is inside
+        # Display Name ex: Bear Market Index
+        # Return display name if nice, else first part of shortcode?
+        # Actually standard practice: usage of shortcodes parts.
+        if shortcode:
+            parts = shortcode.split("_")
+            if len(parts) > 1:
+                return f"{parts[1]}_{parts[2]}" # e.g. R_100, Frx_EURUSD
+        return display_name or "Unknown"

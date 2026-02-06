@@ -9,6 +9,9 @@ from contextlib import asynccontextmanager
 import uvicorn
 from datetime import datetime
 
+from dotenv import load_dotenv
+load_dotenv()
+
 # Add api directory to Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'api'))
 
@@ -22,17 +25,13 @@ from api.routers import analyze, risk, reports, users, dashboard, alerts, integr
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Initialize database - THIS MUST HAPPEN
-    print("🚀 Starting TradeGuard API...")
-    
-    # IMPORTANT: Force create all tables
-    print("📊 Creating database tables...")
-    Base.metadata.create_all(bind=engine)
-    print("✅ Database tables created successfully")
+    print("Starting TradeGuard API...")
+    init_db()
     
     yield
     
     # Shutdown
-    print("👋 Shutting down TradeGuard API")
+    print("Shutting down TradeGuard API")
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -48,7 +47,7 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:3000", "http://localhost:3001"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -82,14 +81,7 @@ async def health_check():
         "version": "1.0.0"
     }
 
-# Create tables immediately when module loads (backup)
-# This ensures tables exist even if lifespan doesn't run properly
-print("🔧 Ensuring database tables exist...")
-try:
-    Base.metadata.create_all(bind=engine)
-    print("✅ Tables verified/created")
-except Exception as e:
-    print(f"❌ Error creating tables: {e}")
+
 
 # Run the app
 if __name__ == "__main__":

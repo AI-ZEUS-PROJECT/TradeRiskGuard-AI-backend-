@@ -128,6 +128,12 @@ async def get_user_profile(
     """
     Get current user's profile
     """
+    if current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     response_data = {
         "id": current_user.id,
         "email": current_user.email,
@@ -147,6 +153,12 @@ async def get_user_settings(
     """
     Get user settings
     """
+    if current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     settings = db.query(models.UserSettings)\
         .filter(models.UserSettings.user_id == current_user.id)\
         .first()
@@ -167,6 +179,7 @@ async def get_user_settings(
         min_sl_usage_rate=settings.min_sl_usage_rate,
         ai_enabled=settings.ai_enabled,
         preferred_model=settings.preferred_model,
+        openai_api_key_configured=True if settings.openai_api_key_encrypted else False,
         created_at=settings.created_at,
         updated_at=settings.updated_at
     )
@@ -182,6 +195,12 @@ async def update_user_settings(
     """
     Update user settings
     """
+    if current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     settings = db.query(models.UserSettings)\
         .filter(models.UserSettings.user_id == current_user.id)\
         .first()
@@ -190,10 +209,21 @@ async def update_user_settings(
         settings = models.UserSettings(user_id=current_user.id)
         db.add(settings)
     
-    # Update only provided fields
+    # Update provided fields
     update_data = settings_update.dict(exclude_unset=True)
+    
+    # Handle OpenAI Key encryption specifically
+    if "openai_api_key" in update_data:
+        raw_key = update_data.pop("openai_api_key")
+        if raw_key and raw_key.strip():
+            from api.utils.encryption import encryption_service
+            settings.openai_api_key_encrypted = encryption_service.encrypt(raw_key)
+        elif raw_key == "": # Allow clearing the key
+            settings.openai_api_key_encrypted = None
+
     for field, value in update_data.items():
-        setattr(settings, field, value)
+        if hasattr(settings, field):
+            setattr(settings, field, value)
     
     db.commit()
     db.refresh(settings)
@@ -207,6 +237,7 @@ async def update_user_settings(
         min_sl_usage_rate=settings.min_sl_usage_rate,
         ai_enabled=settings.ai_enabled,
         preferred_model=settings.preferred_model,
+        openai_api_key_configured=True if settings.openai_api_key_encrypted else False,
         created_at=settings.created_at,
         updated_at=settings.updated_at
     )
