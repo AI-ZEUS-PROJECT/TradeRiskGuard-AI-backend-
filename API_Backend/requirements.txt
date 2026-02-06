@@ -1,7 +1,7 @@
 # FastAPI & ASGI
 fastapi
 uvicorn[standard]
-email-validator>=2.0.0
+email-validator
 
 # Database
 sqlalchemy
