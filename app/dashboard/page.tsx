@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
+import { DashboardUpload } from "@/components/dashboard/dashboard-upload"
 import { RiskMetrics } from "@/components/dashboard/risk-metrics"
 import { TradeMetrics } from "@/components/dashboard/trade-metrics"
 import { RiskCharts } from "@/components/dashboard/risk-charts"
@@ -24,6 +25,7 @@ export default function DashboardPage() {
   const [analysis, setAnalysis] = useState<any | null>(null)
   const [analysisLoading, setAnalysisLoading] = useState(false)
   const [analysisError, setAnalysisError] = useState<string | null>(null)
+  const [isUploadOpen, setIsUploadOpen] = useState(false)
   
   // New dashboard API states
   const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(null)
@@ -117,6 +119,27 @@ export default function DashboardPage() {
     load()
   }, [isAuthenticated, isLoading, searchParams])
 
+  // Handle upload success - load the new analysis
+  const handleUploadSuccess = async (analysisId: string) => {
+    try {
+      setAnalysisLoading(true)
+      setAnalysisError(null)
+      
+      const res = await apiClient.getAnalysis(analysisId)
+      if (res.success) {
+        setAnalysis(res.data)
+        // Update URL with new analysis ID without page reload
+        router.push(`/dashboard?analysisId=${encodeURIComponent(analysisId)}`, { scroll: false })
+      } else {
+        setAnalysisError(res.error || res.message || "Failed to load the new analysis.")
+      }
+    } catch (e) {
+      setAnalysisError("Something went wrong while loading your analysis.")
+    } finally {
+      setAnalysisLoading(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <main className="flex flex-col min-h-screen bg-background">
@@ -137,7 +160,12 @@ export default function DashboardPage() {
     <main className="flex flex-col min-h-screen bg-background">
       <Header />
       <div className="flex-1">
-        <DashboardHeader />
+        <DashboardHeader onUploadClick={() => setIsUploadOpen(true)} />
+        <DashboardUpload 
+          isOpen={isUploadOpen} 
+          onClose={() => setIsUploadOpen(false)} 
+          onUploadSuccess={handleUploadSuccess}
+        />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* In this version, RiskMetrics and other widgets still use mock data.
               Real analysis data is fetched above and can be wired in as needed. */}
