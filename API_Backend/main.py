@@ -28,6 +28,15 @@ async def lifespan(app: FastAPI):
     print("Starting TradeGuard API...")
     init_db()
     
+    # Apply any schema migrations/updates
+    try:
+        from apply_migrations import apply_migrations
+        apply_migrations()
+    except ImportError:
+        print("ℹ️ apply_migrations.py not found or could not be imported.")
+    except Exception as e:
+        print(f"❌ Error running migrations: {e}")
+    
     yield
     
     # Shutdown
